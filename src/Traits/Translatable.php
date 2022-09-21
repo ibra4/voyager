@@ -351,11 +351,18 @@ trait Translatable
         $fields = !empty($request->attributes->get('breadRows')) ? array_intersect($request->attributes->get('breadRows'), $transFields) : $transFields;
 
         foreach ($fields as $field) {
-            if (!$request->input($field.'_i18n')) {
-                throw new Exception('Invalid Translatable field'.$field);
+            $trans_field = $request->input($field.'_i18n');
+            if (!$trans_field) {
+                if ($request->get("_tagging")) {
+                    $trans_field = json_encode([
+                        config('voyager.multilingual.default', 'en') => $request->get($field)
+                    ]);
+                } else {
+                    throw new Exception('Invalid Translatable field'.$field);
+                }
             }
-
-            $trans = json_decode($request->input($field.'_i18n'), true);
+            
+            $trans = json_decode($trans_field, true);
 
             // Set the default local value
             $request->merge([$field => $trans[config('voyager.multilingual.default', 'en')]]);
